@@ -117,13 +117,20 @@ namespace DropManager
                     {
                         for (byte k = 0; k < height; k++)
                         {
-                            try
+                            if(player.Player.inventory.getItemCount(page) > 0)
                             {
-                                player.Player.inventory.askDropItem(player.CSteamID, page, i, k);
+                                try
+                                {
+                                    player.Player.inventory.askDropItem(player.CSteamID, page, i, k);
+                                }
+                                catch (Exception e)
+                                {
+                                    Logger.Log("[DropManager] Warning: " + e.Message);
+                                }
                             }
-                            catch(Exception e)
+                            else
                             {
-                                Logger.Log("[DropManager] Warning: " + e.Message);
+                                return;
                             }
                         }
                     }
