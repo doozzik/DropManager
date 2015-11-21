@@ -5,6 +5,7 @@ using Rocket.Unturned.Events;
 using SDG.Unturned;
 using System;
 using System.Collections.Generic;
+using Rocket.API;
 
 namespace DropManager
 {
@@ -31,7 +32,7 @@ namespace DropManager
         {
             this.showWarnings = Configuration.Instance.ShowWarnings;
 
-            if (!Configuration.Instance.LeftOtherDrop) // if we want to clear players inventory before death
+            if (!Configuration.Instance.LeftOtherDrop || player.IsAdmin || player.HasPermission("dropmanager.alwaysclear")) // if we want to clear players inventory before death
             {
                 ClearAllItems(player);
                 ClearAllClothes(player);
@@ -46,7 +47,11 @@ namespace DropManager
                 DropAllItems(player); // we will drop all items for get a free space to add new items
             }
             
-            AddItems(player); // add new items
+            if (!player.IsAdmin && !player.HasPermission("dropmanager.alwaysclear"))
+            {
+                AddItems(player); // add to drop new items, if player is not an admin or dont have special permission
+            }
+            
         }
 
         private void BlackListController(string configBlackList)
