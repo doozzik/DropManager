@@ -28,17 +28,18 @@ namespace DropManager
         {
             if (!Configuration.Instance.LeftOtherDrop)
             {
-                ClearItems(player);
-                ClearClothes(player);
+                ClearAllItems(player);
+                ClearAllClothes(player);
             }
 
             ClearBlackListItems(player, Configuration.Instance.BlackListIds);
+            ClearBlackListClothes(player, Configuration.Instance.BlackListIds);
 
             DropAllItems(player);
             AddItems(player);
         }
 
-        private void ClearItems(UnturnedPlayer player)
+        private void ClearAllItems(UnturnedPlayer player)
         {
             try // this code belongs to Zaup mod developer
             {
@@ -63,7 +64,7 @@ namespace DropManager
 
         private void ClearBlackListItems(UnturnedPlayer player, string blackList)
         {
-            try // this code belongs to Zaup mod developer
+            try
             {
                 player.Player.equipment.dequip();
                 for (byte page = 0; page < PlayerInventory.PAGES; page++)
@@ -88,47 +89,70 @@ namespace DropManager
             }
         }
 
-        private void ClearClothes(UnturnedPlayer player)
+        private void ClearAllClothes(UnturnedPlayer player)
         {
             try // this code belongs to Zaup mod developer
             {
                 player.Player.Clothing.askWearBackpack(0, 0, new byte[0]);
-                for (byte p2 = 0; p2 < player.Player.Inventory.getItemCount(2); p2++)
-                {
-                    player.Player.Inventory.removeItem(2, 0);
-                }
+                ClearAllItems(player);
+
                 player.Player.Clothing.askWearGlasses(0, 0, new byte[0]);
-                for (byte p2 = 0; p2 < player.Player.Inventory.getItemCount(2); p2++)
-                {
-                    player.Player.Inventory.removeItem(2, 0);
-                }
+                ClearAllItems(player);
+
                 player.Player.Clothing.askWearHat(0, 0, new byte[0]);
-                for (byte p2 = 0; p2 < player.Player.Inventory.getItemCount(2); p2++)
-                {
-                    player.Player.Inventory.removeItem(2, 0);
-                }
+                ClearAllItems(player);
+
                 player.Player.Clothing.askWearMask(0, 0, new byte[0]);
-                for (byte p2 = 0; p2 < player.Player.Inventory.getItemCount(2); p2++)
-                {
-                    player.Player.Inventory.removeItem(2, 0);
-                }
+                ClearAllItems(player);
+
                 player.Player.Clothing.askWearPants(0, 0, new byte[0]);
-                for (byte p2 = 0; p2 < player.Player.Inventory.getItemCount(2); p2++)
-                {
-                    player.Player.Inventory.removeItem(2, 0);
-                }
+                ClearAllItems(player);
+
                 player.Player.Clothing.askWearShirt(0, 0, new byte[0]);
-                for (byte p2 = 0; p2 < player.Player.Inventory.getItemCount(2); p2++)
-                {
-                    player.Player.Inventory.removeItem(2, 0);
-                }
+                ClearAllItems(player);
+
                 player.Player.Clothing.askWearVest(0, 0, new byte[0]);
-                for (byte p2 = 0; p2 < player.Player.Inventory.getItemCount(2); p2++)
-                {
-                    player.Player.Inventory.removeItem(2, 0);
-                }
+                ClearAllItems(player);
             }
-            catch(Exception e)
+            catch (Exception e)
+            {
+                Logger.Log("[DropManager] Warning: " + e.Message);
+            }
+        }
+
+        private void ClearBlackListClothes(UnturnedPlayer player, string blackList)
+        {
+            try // this code belongs to Zaup mod developer
+            {
+                player.Player.Clothing.askWearBackpack(0, 0, new byte[0]);
+                ClearBlackListItems(player, blackList);
+                DropAllItems(player);
+
+                player.Player.Clothing.askWearGlasses(0, 0, new byte[0]);
+                ClearBlackListItems(player, blackList);
+                DropAllItems(player);
+
+                player.Player.Clothing.askWearHat(0, 0, new byte[0]);
+                ClearBlackListItems(player, blackList);
+                DropAllItems(player);
+
+                player.Player.Clothing.askWearMask(0, 0, new byte[0]);
+                ClearBlackListItems(player, blackList);
+                DropAllItems(player);
+
+                player.Player.Clothing.askWearPants(0, 0, new byte[0]);
+                ClearBlackListItems(player, blackList);
+                DropAllItems(player);
+
+                player.Player.Clothing.askWearShirt(0, 0, new byte[0]);
+                ClearBlackListItems(player, blackList);
+                DropAllItems(player);
+
+                player.Player.Clothing.askWearVest(0, 0, new byte[0]);
+                ClearBlackListItems(player, blackList);
+                DropAllItems(player);
+            }
+            catch (Exception e)
             {
                 Logger.Log("[DropManager] Warning: " + e.Message);
             }
