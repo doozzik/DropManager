@@ -21,6 +21,7 @@ namespace DropManager
             {
                 new Item("Venison Raw meat", 514, 1, 2),
                 new Item("Tomato", 340, 0, 1),
+                new Item("5 dollars", 1051, 1, 1)
             };
 
             BlackListIds = "47132, 58950, 41829";
