@@ -5,13 +5,16 @@ namespace DropManager
 {
     public class DropManagerConfiguration : IRocketPluginConfiguration
     {
+        public bool ShowWarnings;
         public bool LeftOtherDrop;
-        public string BlackListIds;
 
         public List<Item> Items;
 
+        public string BlackListIds;
+
         public void LoadDefaults()
         {
+            ShowWarnings = true;
             LeftOtherDrop = true;
             
             Items = new List<Item>
@@ -20,7 +23,7 @@ namespace DropManager
                 new Item("Tomato", 340, 0, 1),
             };
 
-            BlackListIds = "47132, 58950";
+            BlackListIds = "47132, 58950, 41829";
         }
     }
 }

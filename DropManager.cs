@@ -4,6 +4,7 @@ using Rocket.Core.Logging;
 using Rocket.Unturned.Events;
 using SDG.Unturned;
 using System;
+using System.Collections.Generic;
 
 namespace DropManager
 {
@@ -11,11 +12,13 @@ namespace DropManager
     {
         public static DropManager Instance;
 
-        private System.Random rand = new System.Random();
-        private int random;
-
+        private bool showWarnings;
+        private List<ushort> blackList = new List<ushort>();
+        
         protected override void Load()
         {
+            Instance = this;
+
             UnturnedPlayerEvents.OnPlayerDeath += Drop;
         }
 
@@ -26,72 +29,107 @@ namespace DropManager
 
         private void Drop(UnturnedPlayer player, EDeathCause cause, ELimb limb, Steamworks.CSteamID murderer)
         {
-            if (!Configuration.Instance.LeftOtherDrop)
+            this.showWarnings = Configuration.Instance.ShowWarnings;
+
+            if (!Configuration.Instance.LeftOtherDrop) // if we want to clear players inventory before death
             {
                 ClearAllItems(player);
                 ClearAllClothes(player);
             }
+            else
+            {
+                BlackListController(Configuration.Instance.BlackListIds); // convert string to ushort list
 
-            ClearBlackListItems(player, Configuration.Instance.BlackListIds);
-            ClearBlackListClothes(player, Configuration.Instance.BlackListIds);
+                ClearBlackListedItems(player); // remove only items, which contains in blacklist
+                ClearBlackListedClothes(player);
 
-            DropAllItems(player);
-            AddItems(player);
+                DropAllItems(player); // we will drop all items for get a free space to add new items
+            }
+            
+            AddItems(player); // add new items
+        }
+
+        private void BlackListController(string configBlackList)
+        {
+            configBlackList = configBlackList.Replace(" ", "");
+            string[] array = configBlackList.Split(',');
+            
+            foreach (string str in array)
+            {
+                try
+                {
+                    blackList.Add(Convert.ToUInt16(str));
+                }
+                catch (Exception e)
+                {
+                    if (showWarnings)
+                    {
+                        Logger.LogWarning(@"[DropManager] Warning: Cant convert your BlackListIds string to integer.");
+                        Logger.LogWarning(@"[DropManager] Warning: You can use only: numbers 0-9, whitespaces ("" ""), and commas ("","")");
+                        Logger.LogWarning(@"[DropManager] Warning: For example: 12, 28, 300, 301, 312");
+                        Logger.LogWarning(@"[DropManager] Warning: Full problem description: " + e.Message);
+                    }
+                }
+            }
         }
 
         private void ClearAllItems(UnturnedPlayer player)
         {
-            try // this code belongs to Zaup mod developer
+            for (byte page = 0; page < PlayerInventory.PAGES; page++)
             {
-                player.Player.equipment.dequip();
-                for (byte page = 0; page < PlayerInventory.PAGES; page++)
+                byte itemCount = player.Player.inventory.getItemCount(page);
+                for (byte index = 0; index < itemCount; index++)
                 {
-                    byte itemCount = player.Player.inventory.getItemCount(page);
-                    if (itemCount > 0)
+                    try
                     {
-                        for (byte item = 0; item < itemCount; item++)
+                        player.Player.inventory.removeItem(page, index);
+                        index--;
+                        itemCount--;
+                    }
+                    catch (Exception e)
+                    {
+                        if (showWarnings)
                         {
-                            player.Player.inventory.removeItem(page, 0);
+                            Logger.LogWarning(@"[DropManager] Warning: Cant clean inventory for player " + player.CharacterName);
+                            Logger.LogWarning(@"[DropManager] Warning: Full problem description: " + e.Message);
                         }
                     }
                 }
             }
-            catch (Exception e)
-            {
-                Logger.Log("[DropManager] Warning: " + e.Message);
-            }
         }
 
-        private void ClearBlackListItems(UnturnedPlayer player, string blackList)
+        private void ClearBlackListedItems(UnturnedPlayer player)
         {
-            try
+            for (byte page = 0; page < PlayerInventory.PAGES; page++)
             {
-                player.Player.equipment.dequip();
-                for (byte page = 0; page < PlayerInventory.PAGES; page++)
+                byte itemCount = player.Player.inventory.getItemCount(page);
+                for (byte index = 0; index < itemCount; index++)
                 {
-                    byte itemCount = player.Player.inventory.getItemCount(page);
-                    if (itemCount > 0)
+                    ushort id = player.Player.inventory.getItem(page, index).item.id;
+                    if (blackList.Contains(id))
                     {
-                        for (byte index = 0; index < itemCount; index++)
+                        try
                         {
-                            ushort id = player.Player.inventory.getItem(page, index).item.id;
-                            if (blackList.Contains(id.ToString() + ','))
+                            player.Player.inventory.removeItem(page, index);
+                            index--;
+                            itemCount--;
+                        }
+                        catch (Exception e)
+                        {
+                            if (showWarnings)
                             {
-                                player.Player.inventory.removeItem(page, index);
+                                Logger.LogWarning(@"[DropManager] Warning: Cant clean BlackListed item for player " + player.CharacterName);
+                                Logger.LogWarning(@"[DropManager] Warning: Full problem description: " + e.Message);
                             }
                         }
                     }
                 }
-            }
-            catch (Exception e)
-            {
-                Logger.Log("[DropManager] Warning: " + e.Message);
             }
         }
 
         private void ClearAllClothes(UnturnedPlayer player)
         {
-            try // this code belongs to Zaup mod developer
+            try
             {
                 player.Player.Clothing.askWearBackpack(0, 0, new byte[0]);
                 ClearAllItems(player);
@@ -116,78 +154,66 @@ namespace DropManager
             }
             catch (Exception e)
             {
-                Logger.Log("[DropManager] Warning: " + e.Message);
+                if (showWarnings)
+                {
+                    Logger.LogWarning(@"[DropManager] Warning: Cant clean clothes for player " + player.CharacterName);
+                    Logger.LogWarning(@"[DropManager] Warning: Full problem description: " + e.Message);
+                }
             }
         }
 
-        private void ClearBlackListClothes(UnturnedPlayer player, string blackList)
+        private void ClearBlackListedClothes(UnturnedPlayer player)
         {
-            try // this code belongs to Zaup mod developer
-            {
-                player.Player.Clothing.askWearBackpack(0, 0, new byte[0]);
-                ClearBlackListItems(player, blackList);
-                DropAllItems(player);
+            player.Player.Clothing.askWearBackpack(0, 0, new byte[0]);
+            ClearBlackListedItems(player);
+            DropAllItems(player);
 
-                player.Player.Clothing.askWearGlasses(0, 0, new byte[0]);
-                ClearBlackListItems(player, blackList);
-                DropAllItems(player);
+            player.Player.Clothing.askWearGlasses(0, 0, new byte[0]);
+            ClearBlackListedItems(player);
+            DropAllItems(player);
 
-                player.Player.Clothing.askWearHat(0, 0, new byte[0]);
-                ClearBlackListItems(player, blackList);
-                DropAllItems(player);
+            player.Player.Clothing.askWearHat(0, 0, new byte[0]);
+            ClearBlackListedItems(player);
+            DropAllItems(player);
 
-                player.Player.Clothing.askWearMask(0, 0, new byte[0]);
-                ClearBlackListItems(player, blackList);
-                DropAllItems(player);
+            player.Player.Clothing.askWearMask(0, 0, new byte[0]);
+            ClearBlackListedItems(player);
+            DropAllItems(player);
 
-                player.Player.Clothing.askWearPants(0, 0, new byte[0]);
-                ClearBlackListItems(player, blackList);
-                DropAllItems(player);
+            player.Player.Clothing.askWearPants(0, 0, new byte[0]);
+            ClearBlackListedItems(player);
+            DropAllItems(player);
 
-                player.Player.Clothing.askWearShirt(0, 0, new byte[0]);
-                ClearBlackListItems(player, blackList);
-                DropAllItems(player);
+            player.Player.Clothing.askWearShirt(0, 0, new byte[0]);
+            ClearBlackListedItems(player);
+            DropAllItems(player);
 
-                player.Player.Clothing.askWearVest(0, 0, new byte[0]);
-                ClearBlackListItems(player, blackList);
-                DropAllItems(player);
-            }
-            catch (Exception e)
-            {
-                Logger.Log("[DropManager] Warning: " + e.Message);
-            }
+            player.Player.Clothing.askWearVest(0, 0, new byte[0]);
+            ClearBlackListedItems(player);
+            DropAllItems(player);
         }
 
         private void DropAllItems(UnturnedPlayer player)
         {
-            player.Player.equipment.dequip();
             for (byte page = 0; page < PlayerInventory.PAGES; page++)
             {
                 byte itemCount = player.Player.inventory.getItemCount(page);
-                if (itemCount > 0)
+                for (byte index = 0; index < itemCount; index++)
                 {
-                    byte width = player.Player.inventory.getWidth(page);
-                    byte height = player.Player.inventory.getHeight(page);
-
-                    for (byte i = 0; i < width; i++)
+                    byte posX = player.Player.inventory.getItem(page, index).PositionX;
+                    byte posY = player.Player.inventory.getItem(page, index).PositionY;
+                    try
                     {
-                        for (byte k = 0; k < height; k++)
+                        player.Player.inventory.askDropItem(player.CSteamID, page, posX, posY);
+                        index--;
+                        itemCount--;
+                    }
+                    catch (Exception e)
+                    {
+                        if (showWarnings)
                         {
-                            if(player.Player.inventory.getItemCount(page) > 0)
-                            {
-                                try
-                                {
-                                    player.Player.inventory.askDropItem(player.CSteamID, page, i, k);
-                                }
-                                catch (Exception e)
-                                {
-                                    Logger.Log("[DropManager] Warning: " + e.Message);
-                                }
-                            }
-                            else
-                            {
-                                return;
-                            }
+                            Logger.LogWarning(@"[DropManager] Warning: Cant drop item for player " + player.CharacterName);
+                            Logger.LogWarning(@"[DropManager] Warning: Full problem description: " + e.Message);
                         }
                     }
                 }
@@ -196,26 +222,42 @@ namespace DropManager
 
         private void AddItems(UnturnedPlayer player)
         {
-            try
+            foreach (Item item in Configuration.Instance.Items) // maybe hard to understand, sorry
             {
-                foreach(Item item in Configuration.Instance.Items) // maybe hard to understand, sorry
+                System.Random rand = new System.Random();
+                int random = rand.Next(item.min, item.max + 1);
+
+                try
                 {
-                    random = rand.Next(item.min, item.max + 1);
-                    
-                    if (random > 0)
+                    SDG.Unturned.Item itemToAdd = new SDG.Unturned.Item(item.id, true);
+
+                    for (int i = random; i > 0; i--)
                     {
-                        SDG.Unturned.Item itemToAdd = new SDG.Unturned.Item(item.id, true);
-                        for (int i = random; i > 0; i--)
+                        try
                         {
                             player.Player.inventory.tryAddItem(itemToAdd, true);
-                            DropAllItems(player);
                         }
+                        catch (Exception e)
+                        {
+                            if (showWarnings)
+                            {
+                                Logger.LogWarning(@"[DropManager] Warning: Cant add item to player " + player.CharacterName);
+                                Logger.LogWarning(@"[DropManager] Warning: Full problem description: " + e.Message);
+                            }
+                        }
+
+                        DropAllItems(player);
                     }
                 }
-            }
-            catch(Exception e)
-            {
-                Logger.Log("[DropManager] Wanring: " + e.Message);
+                catch (Exception e)
+                {
+                    if (showWarnings)
+                    {
+                        Logger.LogWarning(@"[DropManager] Warning: Cant find item by this id: " + item.id);
+                        Logger.LogWarning(@"[DropManager] Warning: Check config and site, where you get Unturned items id list");
+                        Logger.LogWarning(@"[DropManager] Warning: Full problem description: " + e.Message);
+                    }
+                }
             }
         }
     }
