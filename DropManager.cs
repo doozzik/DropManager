@@ -29,6 +29,8 @@ namespace DropManager
                 ClearClothes(player);
             }
 
+            ClearBlackListItems(player, Configuration.Instance.BlackListIds);
+
             DropAllItems(player);
             AddItems(player);
         }
@@ -46,6 +48,33 @@ namespace DropManager
                         for (byte item = 0; item < itemCount; item++)
                         {
                             player.Player.inventory.removeItem(page, 0);
+                        }
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                Logger.Log("[DropManager] Warning: " + e.Message);
+            }
+        }
+
+        private void ClearBlackListItems(UnturnedPlayer player, string blackList)
+        {
+            try // this code belongs to Zaup mod developer
+            {
+                player.Player.equipment.dequip();
+                for (byte page = 0; page < PlayerInventory.PAGES; page++)
+                {
+                    byte itemCount = player.Player.inventory.getItemCount(page);
+                    if (itemCount > 0)
+                    {
+                        for (byte index = 0; index < itemCount; index++)
+                        {
+                            ushort id = player.Player.inventory.getItem(page, index).item.id;
+                            if (blackList.Contains(id.ToString() + ','))
+                            {
+                                player.Player.inventory.removeItem(page, index);
+                            }
                         }
                     }
                 }
