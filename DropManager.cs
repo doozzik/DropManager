@@ -16,9 +16,12 @@ namespace DropManager
 
         protected override void Load()
         {
-            Instance = this;
-
             UnturnedPlayerEvents.OnPlayerDeath += Drop;
+        }
+
+        protected override void Unload()
+        {
+            UnturnedPlayerEvents.OnPlayerDeath -= Drop;
         }
 
         private void Drop(UnturnedPlayer player, EDeathCause cause, ELimb limb, Steamworks.CSteamID murderer)
