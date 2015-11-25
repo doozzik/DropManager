@@ -12,10 +12,8 @@ namespace DropManager
     public class DropManager : RocketPlugin<DropManagerConfiguration>
     {
         public static DropManager Instance;
+        private System.Random rand = new System.Random();
 
-        private bool showWarnings;
-        private List<ushort> blackList = new List<ushort>();
-        
         protected override void Load()
         {
             Instance = this;
@@ -30,31 +28,51 @@ namespace DropManager
 
         private void Drop(UnturnedPlayer player, EDeathCause cause, ELimb limb, Steamworks.CSteamID murderer)
         {
-            this.showWarnings = Configuration.Instance.ShowWarnings;
+            bool showWarnings = Configuration.Instance.ShowWarnings;
+            string leftOtherDrop = Configuration.Instance.LeftOtherDrop;
+            string blackListIds = Configuration.Instance.BlackListIds;
 
-            if (!Configuration.Instance.LeftOtherDrop || player.IsAdmin || player.HasPermission("dropmanager.alwaysclear")) // if we want to clear players inventory before death
+            if (player.IsAdmin || player.HasPermission("dropmanager.alwaysclear")) // if we want to clear players inventory before death
             {
-                ClearAllItems(player);
-                ClearAllClothes(player);
+                ClearAllItems(player, showWarnings);
+                ClearAllClothes(player, showWarnings);
             }
             else
             {
-                BlackListController(Configuration.Instance.BlackListIds); // convert string to ushort list
-
-                ClearBlackListedItems(player); // remove only items, which contains in blacklist
-                ClearBlackListedClothes(player);
-
-                DropAllItems(player); // we will drop all items for get a free space to add new items
+                List<ushort> blackList = new List<ushort>();
+                
+                BlackListController(blackListIds, blackList, showWarnings); // convert string to ushort list
+                ClearBlackListedItems(player, blackList, showWarnings); // remove only items, which contains in blacklist
+                
+                int allItemsAmount = 0;
+                int amountOfItemsToClear = 0;
+                for (byte page = 0; page < PlayerInventory.PAGES; page++)
+                {
+                    allItemsAmount += player.Player.inventory.getItemCount(page); // set allItemsAmount
+                }
+                amountOfItemsToClear = CalculateAmountOfRandomItemsToClear(player, allItemsAmount, leftOtherDrop, showWarnings);
+                if (amountOfItemsToClear == allItemsAmount && allItemsAmount != 0)
+                {
+                    ClearAllItems(player, showWarnings);
+                    ClearAllClothes(player, showWarnings);
+                }
+                else
+                {
+                    ClearRandomItems(player, amountOfItemsToClear, showWarnings);
+                }
+                
+                DropAllItems(player, showWarnings); // we will drop all items for get a free space to new items
+                ClearBlackListedClothes(player, blackList, showWarnings);
             }
             
             if (!player.IsAdmin && !player.HasPermission("dropmanager.alwaysclear"))
             {
-                AddItems(player); // add to drop new items, if player is not an admin or dont have special permission
+                AddItems(player, showWarnings); // add to drop new items, if player is not an admin or dont have special permission
             }
             
         }
 
-        private void BlackListController(string configBlackList)
+        private void BlackListController(string configBlackList, List<ushort> blackList, bool showWarnings)
         {
             configBlackList = configBlackList.Replace(" ", "");
             string[] array = configBlackList.Split(',');
@@ -78,7 +96,7 @@ namespace DropManager
             }
         }
 
-        private void ClearAllItems(UnturnedPlayer player)
+        private void ClearAllItems(UnturnedPlayer player, bool showWarnings)
         {
             for (byte page = 0; page < PlayerInventory.PAGES; page++)
             {
@@ -103,7 +121,7 @@ namespace DropManager
             }
         }
 
-        private void ClearBlackListedItems(UnturnedPlayer player)
+        private void ClearBlackListedItems(UnturnedPlayer player, List<ushort> blackList, bool showWarnings)
         {
             for (byte page = 0; page < PlayerInventory.PAGES; page++)
             {
@@ -132,30 +150,30 @@ namespace DropManager
             }
         }
 
-        private void ClearAllClothes(UnturnedPlayer player)
+        private void ClearAllClothes(UnturnedPlayer player, bool showWarnings)
         {
             try
             {
                 player.Player.Clothing.askWearBackpack(0, 0, new byte[0]);
-                ClearAllItems(player);
+                ClearAllItems(player, showWarnings);
 
                 player.Player.Clothing.askWearGlasses(0, 0, new byte[0]);
-                ClearAllItems(player);
+                ClearAllItems(player, showWarnings);
 
                 player.Player.Clothing.askWearHat(0, 0, new byte[0]);
-                ClearAllItems(player);
+                ClearAllItems(player, showWarnings);
 
                 player.Player.Clothing.askWearMask(0, 0, new byte[0]);
-                ClearAllItems(player);
+                ClearAllItems(player, showWarnings);
 
                 player.Player.Clothing.askWearPants(0, 0, new byte[0]);
-                ClearAllItems(player);
+                ClearAllItems(player, showWarnings);
 
                 player.Player.Clothing.askWearShirt(0, 0, new byte[0]);
-                ClearAllItems(player);
+                ClearAllItems(player, showWarnings);
 
                 player.Player.Clothing.askWearVest(0, 0, new byte[0]);
-                ClearAllItems(player);
+                ClearAllItems(player, showWarnings);
             }
             catch (Exception e)
             {
@@ -167,38 +185,135 @@ namespace DropManager
             }
         }
 
-        private void ClearBlackListedClothes(UnturnedPlayer player)
+        private void ClearBlackListedClothes(UnturnedPlayer player, List<ushort> blackList, bool showWarnings)
         {
             player.Player.Clothing.askWearBackpack(0, 0, new byte[0]);
-            ClearBlackListedItems(player);
-            DropAllItems(player);
+            ClearBlackListedItems(player, blackList, showWarnings);
+            DropAllItems(player, showWarnings);
 
             player.Player.Clothing.askWearGlasses(0, 0, new byte[0]);
-            ClearBlackListedItems(player);
-            DropAllItems(player);
+            ClearBlackListedItems(player, blackList, showWarnings);
+            DropAllItems(player, showWarnings);
 
             player.Player.Clothing.askWearHat(0, 0, new byte[0]);
-            ClearBlackListedItems(player);
-            DropAllItems(player);
+            ClearBlackListedItems(player, blackList, showWarnings);
+            DropAllItems(player, showWarnings);
 
             player.Player.Clothing.askWearMask(0, 0, new byte[0]);
-            ClearBlackListedItems(player);
-            DropAllItems(player);
+            ClearBlackListedItems(player, blackList, showWarnings);
+            DropAllItems(player, showWarnings);
 
             player.Player.Clothing.askWearPants(0, 0, new byte[0]);
-            ClearBlackListedItems(player);
-            DropAllItems(player);
+            ClearBlackListedItems(player, blackList, showWarnings);
+            DropAllItems(player, showWarnings);
 
             player.Player.Clothing.askWearShirt(0, 0, new byte[0]);
-            ClearBlackListedItems(player);
-            DropAllItems(player);
+            ClearBlackListedItems(player, blackList, showWarnings);
+            DropAllItems(player, showWarnings);
 
             player.Player.Clothing.askWearVest(0, 0, new byte[0]);
-            ClearBlackListedItems(player);
-            DropAllItems(player);
+            ClearBlackListedItems(player, blackList, showWarnings);
+            DropAllItems(player, showWarnings);
         }
 
-        private void DropAllItems(UnturnedPlayer player)
+        private void ClearRandomItems(UnturnedPlayer player, int amount, bool showWarnings)
+        {
+            while (amount > 0)
+            {
+                byte page = Convert.ToByte(rand.Next(0, PlayerInventory.PAGES));
+                byte itemsCountOnPage = player.Player.inventory.getItemCount(page);
+
+                if (itemsCountOnPage > 0)
+                {
+                    byte index = Convert.ToByte(rand.Next(0, itemsCountOnPage));
+                    try
+                    {
+                        player.Player.inventory.removeItem(page, index);
+                        amount--;
+                    }
+                    catch (Exception e)
+                    {
+                        if (showWarnings)
+                        {
+                            Logger.LogWarning(@"[DropManager] Warning: Cant ClearRandomItem for player " + player.CharacterName);
+                            Logger.LogWarning(@"[DropManager] Warning: Full problem description: " + e.Message);
+                        }
+                    }
+                }
+            }
+        }
+
+        private int CalculateAmountOfRandomItemsToClear(UnturnedPlayer player, int allItemsAmount, string percentage, bool showWarnings)
+        {
+            string sourcePercentage = percentage;
+            percentage = percentage.Trim();
+            percentage = percentage.Trim('%');
+
+            int finalPercentage;
+            
+            if (percentage == "true")
+            {
+                if (showWarnings)
+                {
+                    Logger.LogWarning(@"[DropManager] Warning: Seems, like you have updated this plugin, but dont remove config before this.");
+                    Logger.LogWarning(@"[DropManager] Warning: Cant CalculateAmountOfRandomItemsToClear.");
+                    Logger.LogWarning(@"[DropManager] Warning: You set DropPercentage to: " + sourcePercentage);
+                    Logger.LogWarning(@"[DropManager] Warning: DropPercentage can be, for example: 0% (clear all drop), 15%, 50%, 100% (left all drop)");
+                    Logger.LogWarning(@"[DropManager] Warning: We will set DropPercentage to: 100%");
+                }
+                finalPercentage = 100;
+            }
+
+            if (percentage == "false")
+            {
+                if (showWarnings)
+                {
+                    Logger.LogWarning(@"[DropManager] Warning: Seems, like you have updated this plugin, but dont remove config before this.");
+                    Logger.LogWarning(@"[DropManager] Warning: Cant CalculateAmountOfRandomItemsToClear.");
+                    Logger.LogWarning(@"[DropManager] Warning: You set DropPercentage to: " + sourcePercentage);
+                    Logger.LogWarning(@"[DropManager] Warning: DropPercentage can be, for example: 0% (clear all drop), 15%, 50%, 100% (left all drop)");
+                    Logger.LogWarning(@"[DropManager] Warning: We will set DropPercentage to: 0%");
+                }
+                finalPercentage = 0;
+            }
+
+            try
+            {
+                finalPercentage = Convert.ToInt32(percentage);
+            }
+            catch (Exception e)
+            {
+                Logger.LogWarning(@"[DropManager] Warning: Cant CalculateAmountOfRandomItemsToClear: cant convert your value to integer");
+                Logger.LogWarning(@"[DropManager] Warning: You set DropPercentage to: " + sourcePercentage);
+                Logger.LogWarning(@"[DropManager] Warning: DropPercentage can be, for example: 0% (clear all drop), 15%, 50%, 100% (left all drop)");
+                Logger.LogWarning(@"[DropManager] Warning: We will set DropPercentage to: 100%");
+                Logger.LogWarning(@"[DropManager] Warning: Full problem description: " + e.Message);
+                finalPercentage = 100;
+            }
+
+            if (finalPercentage < 0 || finalPercentage > 100)
+            {
+                Logger.LogWarning(@"[DropManager] Warning: Cant CalculateAmountOfRandomItemsToClear: your value is less than 0% or bigger than 100%");
+                Logger.LogWarning(@"[DropManager] Warning: You set DropPercentage to: " + sourcePercentage);
+                Logger.LogWarning(@"[DropManager] Warning: DropPercentage can be, for example: 0% (clear all drop), 15%, 50%, 100% (left all drop)");
+                Logger.LogWarning(@"[DropManager] Warning: We will set DropPercentage to: 100%");
+                finalPercentage = 100;
+            }
+
+            if (finalPercentage == 100)
+            {
+                return 0;
+            }
+
+            if (finalPercentage == 0)
+            {
+                return allItemsAmount;
+            }
+
+            return Convert.ToInt32(allItemsAmount - Math.Ceiling(allItemsAmount * finalPercentage / (double)100));
+        }
+        
+        private void DropAllItems(UnturnedPlayer player, bool showWarnings)
         {
             for (byte page = 0; page < PlayerInventory.PAGES; page++)
             {
@@ -225,11 +340,10 @@ namespace DropManager
             }
         }
 
-        private void AddItems(UnturnedPlayer player)
+        private void AddItems(UnturnedPlayer player, bool showWarnings)
         {
             foreach (Item item in Configuration.Instance.Items) // maybe hard to understand, sorry
             {
-                System.Random rand = new System.Random();
                 int random = rand.Next(item.min, item.max + 1);
 
                 try
@@ -251,7 +365,7 @@ namespace DropManager
                             }
                         }
 
-                        DropAllItems(player);
+                        DropAllItems(player, showWarnings);
                     }
                 }
                 catch (Exception e)

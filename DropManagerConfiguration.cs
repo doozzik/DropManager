@@ -6,7 +6,7 @@ namespace DropManager
     public class DropManagerConfiguration : IRocketPluginConfiguration
     {
         public bool ShowWarnings;
-        public bool LeftOtherDrop;
+        public string LeftOtherDrop;
 
         public List<Item> Items;
 
@@ -15,7 +15,7 @@ namespace DropManager
         public void LoadDefaults()
         {
             ShowWarnings = true;
-            LeftOtherDrop = true;
+            LeftOtherDrop = "100%";
             
             Items = new List<Item>
             {
