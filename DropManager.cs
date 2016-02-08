@@ -43,7 +43,7 @@ namespace DropManager
                 
                 BlackListController(blackListIds, blackList, showWarnings); // convert string to ushort list
                 ClearBlackListedItems(player, blackList, showWarnings); // remove only items, which contains in blacklist
-                
+                Logger.Log(blackList.Count.ToString());
                 int allItemsAmount = 0;
                 int amountOfItemsToClear = 0;
                 for (byte page = 0; page < PlayerInventory.PAGES; page++)
@@ -154,25 +154,25 @@ namespace DropManager
         {
             try
             {
-                player.Player.Clothing.askWearBackpack(0, 0, new byte[0]);
+                player.Player.Clothing.askWearBackpack(0, 0, new byte[0], true);
                 ClearAllItems(player, showWarnings);
 
-                player.Player.Clothing.askWearGlasses(0, 0, new byte[0]);
+                player.Player.Clothing.askWearGlasses(0, 0, new byte[0], true);
                 ClearAllItems(player, showWarnings);
 
-                player.Player.Clothing.askWearHat(0, 0, new byte[0]);
+                player.Player.Clothing.askWearHat(0, 0, new byte[0], true);
                 ClearAllItems(player, showWarnings);
 
-                player.Player.Clothing.askWearMask(0, 0, new byte[0]);
+                player.Player.Clothing.askWearMask(0, 0, new byte[0], true);
                 ClearAllItems(player, showWarnings);
 
-                player.Player.Clothing.askWearPants(0, 0, new byte[0]);
+                player.Player.Clothing.askWearPants(0, 0, new byte[0], true);
                 ClearAllItems(player, showWarnings);
 
-                player.Player.Clothing.askWearShirt(0, 0, new byte[0]);
+                player.Player.Clothing.askWearShirt(0, 0, new byte[0], true);
                 ClearAllItems(player, showWarnings);
 
-                player.Player.Clothing.askWearVest(0, 0, new byte[0]);
+                player.Player.Clothing.askWearVest(0, 0, new byte[0], true);
                 ClearAllItems(player, showWarnings);
             }
             catch (Exception e)
@@ -187,31 +187,31 @@ namespace DropManager
 
         private void ClearBlackListedClothes(UnturnedPlayer player, List<ushort> blackList, bool showWarnings)
         {
-            player.Player.Clothing.askWearBackpack(0, 0, new byte[0]);
+            player.Player.Clothing.askWearBackpack(0, 0, new byte[0], true);
             ClearBlackListedItems(player, blackList, showWarnings);
             DropAllItems(player, showWarnings);
 
-            player.Player.Clothing.askWearGlasses(0, 0, new byte[0]);
+            player.Player.Clothing.askWearGlasses(0, 0, new byte[0], true);
             ClearBlackListedItems(player, blackList, showWarnings);
             DropAllItems(player, showWarnings);
 
-            player.Player.Clothing.askWearHat(0, 0, new byte[0]);
+            player.Player.Clothing.askWearHat(0, 0, new byte[0], true);
             ClearBlackListedItems(player, blackList, showWarnings);
             DropAllItems(player, showWarnings);
 
-            player.Player.Clothing.askWearMask(0, 0, new byte[0]);
+            player.Player.Clothing.askWearMask(0, 0, new byte[0], true);
             ClearBlackListedItems(player, blackList, showWarnings);
             DropAllItems(player, showWarnings);
 
-            player.Player.Clothing.askWearPants(0, 0, new byte[0]);
+            player.Player.Clothing.askWearPants(0, 0, new byte[0], true);
             ClearBlackListedItems(player, blackList, showWarnings);
             DropAllItems(player, showWarnings);
 
-            player.Player.Clothing.askWearShirt(0, 0, new byte[0]);
+            player.Player.Clothing.askWearShirt(0, 0, new byte[0], true);
             ClearBlackListedItems(player, blackList, showWarnings);
             DropAllItems(player, showWarnings);
 
-            player.Player.Clothing.askWearVest(0, 0, new byte[0]);
+            player.Player.Clothing.askWearVest(0, 0, new byte[0], true);
             ClearBlackListedItems(player, blackList, showWarnings);
             DropAllItems(player, showWarnings);
         }
