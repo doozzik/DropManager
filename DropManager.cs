@@ -12,12 +12,13 @@ namespace DropManager
     public class DropManager : RocketPlugin<DropManagerConfiguration>
     {
         public static DropManager Instance;
+        private int invPages = PlayerInventory.PAGES - 1;
         private System.Random rand = new System.Random();
 
         protected override void Load()
         {
             Instance = this;
-
+            
             UnturnedPlayerEvents.OnPlayerDeath += Drop;
         }
 
@@ -46,7 +47,7 @@ namespace DropManager
                 Logger.Log(blackList.Count.ToString());
                 int allItemsAmount = 0;
                 int amountOfItemsToClear = 0;
-                for (byte page = 0; page < PlayerInventory.PAGES; page++)
+                for (byte page = 0; page < invPages; page++)
                 {
                     allItemsAmount += player.Player.inventory.getItemCount(page); // set allItemsAmount
                 }
@@ -98,9 +99,10 @@ namespace DropManager
 
         private void ClearAllItems(UnturnedPlayer player, bool showWarnings)
         {
-            for (byte page = 0; page < PlayerInventory.PAGES; page++)
+            for (byte page = 0; page < invPages; page++)
             {
                 byte itemCount = player.Player.inventory.getItemCount(page);
+                
                 for (byte index = 0; index < itemCount; index++)
                 {
                     try
@@ -123,7 +125,7 @@ namespace DropManager
 
         private void ClearBlackListedItems(UnturnedPlayer player, List<ushort> blackList, bool showWarnings)
         {
-            for (byte page = 0; page < PlayerInventory.PAGES; page++)
+            for (byte page = 0; page < invPages; page++)
             {
                 byte itemCount = player.Player.inventory.getItemCount(page);
                 for (byte index = 0; index < itemCount; index++)
@@ -150,29 +152,30 @@ namespace DropManager
             }
         }
 
+        // Thanks to ZaupClearInventoryLib
         private void ClearAllClothes(UnturnedPlayer player, bool showWarnings)
         {
             try
             {
-                player.Player.Clothing.askWearBackpack(0, 0, new byte[0], true);
+                player.Player.clothing.askWearBackpack(0, 0, new byte[0], true);
                 ClearAllItems(player, showWarnings);
 
-                player.Player.Clothing.askWearGlasses(0, 0, new byte[0], true);
+                player.Player.clothing.askWearGlasses(0, 0, new byte[0], true);
                 ClearAllItems(player, showWarnings);
 
-                player.Player.Clothing.askWearHat(0, 0, new byte[0], true);
+                player.Player.clothing.askWearHat(0, 0, new byte[0], true);
                 ClearAllItems(player, showWarnings);
 
-                player.Player.Clothing.askWearMask(0, 0, new byte[0], true);
+                player.Player.clothing.askWearMask(0, 0, new byte[0], true);
                 ClearAllItems(player, showWarnings);
 
-                player.Player.Clothing.askWearPants(0, 0, new byte[0], true);
+                player.Player.clothing.askWearPants(0, 0, new byte[0], true);
                 ClearAllItems(player, showWarnings);
 
-                player.Player.Clothing.askWearShirt(0, 0, new byte[0], true);
+                player.Player.clothing.askWearShirt(0, 0, new byte[0], true);
                 ClearAllItems(player, showWarnings);
 
-                player.Player.Clothing.askWearVest(0, 0, new byte[0], true);
+                player.Player.clothing.askWearVest(0, 0, new byte[0], true);
                 ClearAllItems(player, showWarnings);
             }
             catch (Exception e)
@@ -187,31 +190,31 @@ namespace DropManager
 
         private void ClearBlackListedClothes(UnturnedPlayer player, List<ushort> blackList, bool showWarnings)
         {
-            player.Player.Clothing.askWearBackpack(0, 0, new byte[0], true);
+            player.Player.clothing.askWearBackpack(0, 0, new byte[0], true);
             ClearBlackListedItems(player, blackList, showWarnings);
             DropAllItems(player, showWarnings);
 
-            player.Player.Clothing.askWearGlasses(0, 0, new byte[0], true);
+            player.Player.clothing.askWearGlasses(0, 0, new byte[0], true);
             ClearBlackListedItems(player, blackList, showWarnings);
             DropAllItems(player, showWarnings);
 
-            player.Player.Clothing.askWearHat(0, 0, new byte[0], true);
+            player.Player.clothing.askWearHat(0, 0, new byte[0], true);
             ClearBlackListedItems(player, blackList, showWarnings);
             DropAllItems(player, showWarnings);
 
-            player.Player.Clothing.askWearMask(0, 0, new byte[0], true);
+            player.Player.clothing.askWearMask(0, 0, new byte[0], true);
             ClearBlackListedItems(player, blackList, showWarnings);
             DropAllItems(player, showWarnings);
 
-            player.Player.Clothing.askWearPants(0, 0, new byte[0], true);
+            player.Player.clothing.askWearPants(0, 0, new byte[0], true);
             ClearBlackListedItems(player, blackList, showWarnings);
             DropAllItems(player, showWarnings);
 
-            player.Player.Clothing.askWearShirt(0, 0, new byte[0], true);
+            player.Player.clothing.askWearShirt(0, 0, new byte[0], true);
             ClearBlackListedItems(player, blackList, showWarnings);
             DropAllItems(player, showWarnings);
 
-            player.Player.Clothing.askWearVest(0, 0, new byte[0], true);
+            player.Player.clothing.askWearVest(0, 0, new byte[0], true);
             ClearBlackListedItems(player, blackList, showWarnings);
             DropAllItems(player, showWarnings);
         }
@@ -220,7 +223,7 @@ namespace DropManager
         {
             while (amount > 0)
             {
-                byte page = Convert.ToByte(rand.Next(0, PlayerInventory.PAGES));
+                byte page = Convert.ToByte(rand.Next(0, invPages));
                 byte itemsCountOnPage = player.Player.inventory.getItemCount(page);
 
                 if (itemsCountOnPage > 0)
@@ -315,13 +318,13 @@ namespace DropManager
         
         private void DropAllItems(UnturnedPlayer player, bool showWarnings)
         {
-            for (byte page = 0; page < PlayerInventory.PAGES; page++)
+            for (byte page = 0; page < invPages; page++)
             {
                 byte itemCount = player.Player.inventory.getItemCount(page);
                 for (byte index = 0; index < itemCount; index++)
                 {
-                    byte posX = player.Player.inventory.getItem(page, index).PositionX;
-                    byte posY = player.Player.inventory.getItem(page, index).PositionY;
+                    byte posX = player.Player.inventory.getItem(page, index).x;
+                    byte posY = player.Player.inventory.getItem(page, index).y;
                     try
                     {
                         player.Player.inventory.askDropItem(player.CSteamID, page, posX, posY);

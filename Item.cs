@@ -1,5 +1,4 @@
-﻿
-namespace DropManager
+﻿namespace DropManager
 {
     public class Item
     {
