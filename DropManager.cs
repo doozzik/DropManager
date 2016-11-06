@@ -33,7 +33,7 @@ namespace DropManager
             string leftOtherDrop = Configuration.Instance.LeftOtherDrop;
             string blackListIds = Configuration.Instance.BlackListIds;
 
-            if (player.IsAdmin || player.HasPermission("dropmanager.alwaysclear")) // if we want to clear players inventory before death
+            if (player.HasPermission("dropmanager.alwaysclear")) // if we want to clear players inventory before death
             {
                 ClearAllItems(player, showWarnings);
                 ClearAllClothes(player, showWarnings);
@@ -65,12 +65,9 @@ namespace DropManager
                 DropAllItems(player, showWarnings); // we will drop all items for get a free space to new items
                 ClearBlackListedClothes(player, blackList, showWarnings);
             }
-            
-            if (!player.IsAdmin && !player.HasPermission("dropmanager.alwaysclear"))
-            {
-                AddItems(player, showWarnings); // add to drop new items, if player is not an admin or dont have special permission
-            }
-            
+
+            AddItems(player, showWarnings);
+
         }
 
         private void BlackListController(string configBlackList, List<ushort> blackList, bool showWarnings)
